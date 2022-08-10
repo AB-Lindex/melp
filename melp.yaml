@@ -1,0 +1,34 @@
+apiVersion: melp/v1alpha1
+
+# REST-endpoint -> Send message
+output:
+  kafka:
+  - endpoint: ${ENDPOINT}
+    key: ${OUTPUT_KEY}
+    secret: ${OUTPUT_SECRET}
+    topic: ${TOPIC}
+    id: xyzzy
+    auth:
+#      fail: true
+      anon: true
+#      bearer: ${OUTPUT_BEARER}
+#      basic:
+#        kalle: ada
+#        olle: gun
+
+# Incoming message -> REST-endpoint
+input:
+  kafka:
+  - endpoint: ${ENDPOINT}
+    key: ${INPUT_KEY}
+    secret: ${INPUT_SECRET}
+    group: ${CONSUMERGROUP}
+    topics:
+    - ${TOPIC}
+    id: read-hb
+    callback:
+      url: http://localhost:9090/dump?topic=${topic}
+      auth:
+        # bearer: 1234abcd
+        basic:
+          kalle: ada

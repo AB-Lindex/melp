@@ -1,0 +1,33 @@
+@base=http://[::]:9090
+
+GET {{base}}/hello
+###
+POST {{base}}/dump
+Content-Type: sand
+
+sahara
+gobi
+
+###
+POST {{base}}/send/abc
+Content-Type: sand
+
+sahara
+gobi
+
+###
+POST {{base}}/send/test-hb-1-prod
+Content-Type: sand
+
+sahara
+gobi
+
+###
+POST {{base}}/send/xyzzy
+Authorization: 1 2 3
+Authorization: bearer abcd1234
+xAuthorization: Bearer KU2cRyuhUiCtYhNdxqsqjzKRzKsZIB5U8f9bTelL3lWWXKAtVmomBzAqAGZf
+xAuthorization: Basic a2FsbGU6YWRh
+Content-Type: sand
+
+johan3
