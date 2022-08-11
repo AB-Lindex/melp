@@ -41,7 +41,13 @@ func send(args *sendArgs, r *http.Request) (interface{}, int, error) {
 
 	fmt.Println(string(body))
 
-	response, err := p.Send(Message{Body: body})
+	msg := Message{Body: body}
+
+	for _, h := range passthruHeaders {
+		msg.AddHeader(h, r.Header.Get(h))
+	}
+
+	response, err := p.Send(msg)
 	if err != nil {
 		log.Error().Msgf("error sending msg: %v", err)
 	}

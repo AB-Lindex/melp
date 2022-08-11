@@ -124,9 +124,9 @@ func (r *kafkaReceiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 					Int32("partition", message.Partition).
 					Int64("offset", message.Offset).
 					Msgf("processing failed: %v", err)
+			} else {
+				session.MarkMessage(message, "")
 			}
-
-			session.MarkMessage(message, "")
 
 		// Should return when `session.Context()` is done.
 		// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
@@ -145,6 +145,11 @@ func (r *kafkaReceiver) CreateMessage(message *sarama.ConsumerMessage) *Message 
 	msg.AddMetadata("topic", message.Topic)
 	msg.AddMetadata("partition", strconv.FormatInt(int64(message.Partition), 10))
 	msg.AddMetadata("offset", strconv.FormatInt(message.Offset, 10))
+
+	for _, h := range message.Headers {
+		msg.AddHeader(string(h.Key), string(h.Value))
+	}
+
 	return msg
 }
 

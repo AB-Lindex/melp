@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"os"
+	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/rs/zerolog/log"
@@ -11,11 +12,32 @@ import (
 
 var netClient = retryablehttp.NewClient()
 
-//&http.Client{
-//	Timeout: time.Second * 10,
-//}
+func init() {
+	netClient.RetryMax = 5
+	netClient.RetryWaitMin = time.Millisecond * 500
+	netClient.RetryWaitMax = time.Second * 3
+}
+
+type httpLogger struct{}
+
+var x retryablehttp.LeveledLogger
+
+func (hlog *httpLogger) Error(format string, v ...interface{}) {
+	log.Error().Msgf("http-client: "+format, v...)
+}
+func (hlog *httpLogger) Info(format string, v ...interface{}) {
+	log.Info().Msgf("http-client: "+format, v...)
+}
+func (hlog *httpLogger) Debug(format string, v ...interface{}) {
+	log.Debug().Msgf("http-client: "+format, v...)
+}
+func (hlog *httpLogger) Warn(format string, v ...interface{}) {
+	log.Warn().Msgf("http-client: "+format, v...)
+}
 
 func (callback *melpCallback) Send(message *Message) error {
+
+	netClient.Logger = new(httpLogger)
 
 	log.Trace().Msgf("preparing to send message...")
 
@@ -51,6 +73,10 @@ func (callback *melpCallback) Send(message *Message) error {
 
 	for k, v := range message.Metadata {
 		req.Header.Add(fmt.Sprintf("melp-%s", k), v)
+	}
+
+	for k, v := range message.Headers {
+		req.Header.Add(k, v)
 	}
 
 	resp, err := netClient.Do(req)

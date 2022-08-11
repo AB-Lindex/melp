@@ -14,6 +14,7 @@ import (
 
 var routes = []router.Route{
 	{Name: "dump", Method: "POST", Path: "/dump", Handler: dump},
+	{Name: "fail", Method: "POST", Path: "/fail", Handler: fail},
 	{Name: "send", Method: "POST", Path: "/send/{id}", Handler: send},
 }
 
@@ -70,4 +71,12 @@ func dump(r *http.Request) {
 		}
 	}
 	log.Info().Msg("dump complete")
+}
+
+type failArgs struct {
+	Status int `json:"status" from:"query"`
+}
+
+func fail(args *failArgs) int {
+	return args.Status
 }

@@ -96,6 +96,13 @@ func (p *kafkaProducer) Send(msg Message) (interface{}, error) {
 
 	var hdrs []sarama.RecordHeader
 
+	for k, v := range msg.Headers {
+		hdrs = append(hdrs, sarama.RecordHeader{
+			Key:   []byte(k),
+			Value: []byte(v),
+		})
+	}
+
 	var pkg = sarama.ProducerMessage{
 		Topic:     p.Topic,
 		Headers:   hdrs,

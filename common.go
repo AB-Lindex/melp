@@ -7,6 +7,16 @@ import (
 	"time"
 )
 
+var passthruHeaders = []string{
+	"Content-Type",
+	"Content-Encoding",
+	"Content-Disposition",
+	"Content-Language",
+	"Content-Range",
+	"ETag",
+	"Expires",
+}
+
 type stringError string
 
 func (err stringError) Error() string {
@@ -49,6 +59,7 @@ type Message struct {
 	Body      []byte
 	Timestamp time.Time
 	Metadata  map[string]string
+	Headers   map[string]string
 }
 
 func (msg *Message) AddMetadata(key, value string) {
@@ -56,6 +67,16 @@ func (msg *Message) AddMetadata(key, value string) {
 		msg.Metadata = make(map[string]string)
 	}
 	msg.Metadata[key] = value
+}
+
+func (msg *Message) AddHeader(key, value string) {
+	if key == "" || value == "" {
+		return
+	}
+	if msg.Headers == nil {
+		msg.Headers = make(map[string]string)
+	}
+	msg.Headers[key] = value
 }
 
 func (msg *Message) ContentType() string {
