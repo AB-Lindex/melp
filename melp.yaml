@@ -8,6 +8,7 @@ output:
     secret: ${OUTPUT_SECRET}
     topic: ${TOPIC}
     id: xyzzy
+    #disabled: true
     auth:
       anon: true
 #      bearer: ${OUTPUT_BEARER}
@@ -25,10 +26,12 @@ input:
     topics:
     - ${TOPIC}
     id: read-hb
+    #disabled: true
     callback:
 #      url: http://localhost:9090/dump?topic=${topic}
-      url: http://localhost:9090/fail?topic=${topic}&status=500
-      auth:
+#      url: http://localhost:9090/fail?topic=${topic}&status=200&accept=44
+      url: http://localhost:9090/retry/xyzzy
+#      auth:
         # bearer: 1234abcd
 #        basic:
 #          kalle: ada

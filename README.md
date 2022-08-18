@@ -1,6 +1,8 @@
 # melp
 A Message Helper to proxy between messages and REST-APIs
 
+Please check out the usage-guide with [REST-API](./REST-API.md) examples
+
 ## Send message using REST-API (output)
 
 This setup is when the `Actor` is unable to directly talk to the desired messaging system (firewall or 3rd-party product are common scenarions).
@@ -12,42 +14,24 @@ flowchart LR;
     A([Actor])
     O[[Melp]]
     C([Messaging System])
-    A== POST /send/ID ==>O
-    O-- 200 OK -->A
-    O== "(msg protocol)" ==>C
-    C-- "(ok)" -->O
-``````
-
-## Supported outputs
-
-### Kafka
-```yaml
-output:
-  kafka:
-  - endpoint: sasl_ssl://kafka.local:9092
-    key: MY_API_KEY
-    secret: MY_API_SECRET
-    topic: KAFKA_TOPIC
-    id: ID_FOR_POST_URL
+    A== "1) POST /send/ID" ==>O
+    O== "2) (msg protocol)" ==>C
+    C-- "3) (ok)" -->O
+    O-- "4) 200 OK" -->A
 ```
 
-## Authorization
+[More information..](./docs/REST-API.md)
 
-### Outputs
-All `output`s must have an `auth` section to either say that anonymous access is allowed, or what kind of HTTP Authorization is required.
+## Receive message (like a webhook)
 
-Just add this to you `output` entry
-```yaml
-    auth:
-      anon: false
-      bearer: BEARER_TOKEN_FROM_ACTOR
-      basic:
-        ACTOR_USERNAME1: ACTOR_PASSWORD1
-        ACTOR_USERNAME2: ACTOR_PASSWORD2
+```mermaid
+flowchart LR;
+    R([Receiver])
+    O[[Melp]]
+    M([Messaging System])
+    M== "1) Message" ==>O
+    O== "2) POST /custom/url" ==>R
+    R-- "3) 200 Ok" -->O
+    O-- "4) (ok)" -->M
 ```
-
-If you want to enable anonymous access to your `output` then add this instead
-```yaml
-    auth:
-      anon: true
-```
+    

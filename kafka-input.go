@@ -114,18 +114,22 @@ func (r *kafkaReceiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 	for {
 		select {
 		case message := <-claim.Messages():
-			log.Trace().Str("group", r.Group).Str("topic", message.Topic).Msgf("%s: Message claimed: value = %s, timestamp = %v", r.ID, string(message.Value), message.Timestamp)
-
-			msg := r.CreateMessage(message)
-			err := r.Callback.Send(msg)
-			if err != nil {
-				log.Error().
-					Str("topic", message.Topic).
-					Int32("partition", message.Partition).
-					Int64("offset", message.Offset).
-					Msgf("processing failed: %v", err)
+			if message == nil {
+				log.Warn().Msgf("%s: received -nil- message", r.ID)
 			} else {
-				session.MarkMessage(message, "")
+				log.Trace().Str("group", r.Group).Str("topic", message.Topic).Msgf("%s: Message claimed: value = %s, timestamp = %v", r.ID, string(message.Value), message.Timestamp)
+
+				msg := r.CreateMessage(message)
+				err := r.Callback.Send(msg)
+				if err != nil {
+					log.Error().
+						Str("topic", message.Topic).
+						Int32("partition", message.Partition).
+						Int64("offset", message.Offset).
+						Msgf("processing failed: %v", err)
+				} else {
+					session.MarkMessage(message, "")
+				}
 			}
 
 		// Should return when `session.Context()` is done.

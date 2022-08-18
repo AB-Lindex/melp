@@ -56,7 +56,7 @@ func (p *kafkaProducer) Connect() (Producer, error) {
 	cfg.Producer.Retry.Max = 10
 	cfg.Producer.Return.Successes = true
 	cfg.Producer.Compression = sarama.CompressionSnappy
-	cfg.Producer.Flush.Frequency = 500 * time.Millisecond
+	//cfg.Producer.Flush.Frequency = 500 * time.Millisecond
 
 	p.Endpoint.SetConfig(cfg)
 
@@ -93,7 +93,6 @@ type kafkaSendResponse struct {
 }
 
 func (p *kafkaProducer) Send(msg Message) (interface{}, error) {
-
 	var hdrs []sarama.RecordHeader
 
 	for k, v := range msg.Headers {
@@ -115,7 +114,7 @@ func (p *kafkaProducer) Send(msg Message) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Trace().Msgf("msg sent: %d/%d", partition, offset)
+	log.Trace().Msgf("%s: msg sent: %d/%d", p.ID, partition, offset)
 
 	return &kafkaSendResponse{
 		Partition: partition,

@@ -11,6 +11,7 @@ type melpKafkaOutputConfig struct {
 	Key      string `json:"key" yaml:"key"`
 	Secret   string `json:"secret" yaml:"secret"`
 	ID       string `json:"id" yaml:"id"`
+	Disabled bool   `json:"disabled" yaml:"disabled"`
 
 	Topic string `json:"topic" yaml:"topic"`
 
@@ -24,6 +25,7 @@ type melpKafkaInputConfig struct {
 	Key      string `json:"key" yaml:"key"`
 	Secret   string `json:"secret" yaml:"secret"`
 	ID       string `json:"id" yaml:"id"`
+	Disabled bool   `json:"disabled" yaml:"disabled"`
 
 	Topics []string `json:"topics" yaml:"topics"`
 	Group  string   `json:"group" yaml:"group"`
@@ -40,6 +42,10 @@ type melpCallback struct {
 
 func (config *melpKafkaOutputConfig) Validate() []error {
 
+	if config.Disabled {
+		return nil
+	}
+
 	config.producer = &kafkaProducer{
 		ID:       os.ExpandEnv(config.ID),
 		Endpoint: newKafkaEndpoint(config.Endpoint, config.Key, config.Secret),
@@ -51,6 +57,10 @@ func (config *melpKafkaOutputConfig) Validate() []error {
 }
 
 func (config *melpKafkaOutputConfig) NewProducer() (Producer, error) {
+	if config.Disabled {
+		return nil, nil
+	}
+
 	if config.producer == nil {
 		log.Panic().Msg("config.producer is null")
 	}
@@ -65,6 +75,10 @@ func (config *melpKafkaOutputConfig) NewProducer() (Producer, error) {
 }
 
 func (config *melpKafkaInputConfig) Validate() []error {
+	if config.Disabled {
+		return nil
+	}
+
 	for i := range config.Topics {
 		config.Topics[i] = os.ExpandEnv(config.Topics[i])
 	}
@@ -81,6 +95,9 @@ func (config *melpKafkaInputConfig) Validate() []error {
 }
 
 func (config *melpKafkaInputConfig) NewReceiver() (Consumer, error) {
+	if config.Disabled {
+		return nil, nil
+	}
 
 	log.Info().Msgf("Listening to '%s'...", config.consumer.Name())
 	_, err := config.consumer.Connect()

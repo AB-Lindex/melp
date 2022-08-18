@@ -20,32 +20,33 @@ func init() {
 
 type httpLogger struct{}
 
-var x retryablehttp.LeveledLogger
-
+func (hlog *httpLogger) Format(format string, v ...interface{}) string {
+	return fmt.Sprintf("http-client: "+format, v...)
+}
 func (hlog *httpLogger) Error(format string, v ...interface{}) {
-	log.Error().Msgf("http-client: "+format, v...)
+	log.Error().Msg(hlog.Format(format, v...))
 }
 func (hlog *httpLogger) Info(format string, v ...interface{}) {
-	log.Info().Msgf("http-client: "+format, v...)
+	log.Info().Msgf(hlog.Format(format, v...))
 }
 func (hlog *httpLogger) Debug(format string, v ...interface{}) {
-	log.Debug().Msgf("http-client: "+format, v...)
+	log.Debug().Msgf(hlog.Format(format, v...))
 }
 func (hlog *httpLogger) Warn(format string, v ...interface{}) {
-	log.Warn().Msgf("http-client: "+format, v...)
+	log.Warn().Msgf(hlog.Format(format, v...))
 }
 
 func (callback *melpCallback) Send(message *Message) error {
 
 	netClient.Logger = new(httpLogger)
 
-	log.Trace().Msgf("preparing to send message...")
+	log.Trace().Msgf("Send-> preparing to send message...")
 
 	url := os.Expand(callback.URL, func(key string) string {
 		return message.Metadata[key]
 	})
 
-	log.Logger.Trace().Msgf("  -> url = '%s'", url)
+	log.Trace().Msgf("Send-> url = '%s'", url)
 
 	//buffer := bytes.NewBuffer(message.Body)
 
@@ -87,7 +88,7 @@ func (callback *melpCallback) Send(message *Message) error {
 	}
 
 	if resp != nil {
-		log.Debug().Msgf("send-response = %d", resp.StatusCode)
+		log.Debug().Msgf("Send-> send-response = %d", resp.StatusCode)
 	}
 
 	return err

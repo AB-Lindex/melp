@@ -28,16 +28,11 @@ type melpInput struct {
 	Kafka []*melpKafkaInputConfig `json:"kafka" yaml:"kafka"`
 }
 
-const (
-	defaultConfigName = "melp.yaml"
-)
-
 var config = new(melpConfig)
 
 func (cfg *melpConfig) Load(name string) bool {
-	if name == "" {
-		name = defaultConfigName
-	}
+
+	outputMap := make(map[string]int)
 
 	f, err := os.Open(name)
 	if err != nil {
@@ -47,7 +42,7 @@ func (cfg *melpConfig) Load(name string) bool {
 	defer f.Close()
 
 	parser := yaml.NewDecoder(f)
-	parser.KnownFields(true)
+	parser.KnownFields(!settings.Relaxed)
 	err = parser.Decode(cfg)
 	if err != nil {
 		log.Error().Msgf("unable to parse config: %v", err)
@@ -61,12 +56,21 @@ func (cfg *melpConfig) Load(name string) bool {
 		errs := output.Validate()
 		if printErrors(errs, "Error validating output #%d:", i) {
 			ok = false
+		} else {
+			outputMap[output.ID]++
 		}
 	}
 
 	for i, input := range cfg.Input.Kafka {
 		errs := input.Validate()
 		if printErrors(errs, "Error validating input #%d:", i) {
+			ok = false
+		}
+	}
+
+	for id, count := range outputMap {
+		if count > 1 {
+			log.Error().Msgf("error: duplicate output id '%s'", id)
 			ok = false
 		}
 	}

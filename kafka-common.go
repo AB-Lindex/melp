@@ -60,7 +60,7 @@ func (slog *saramaLogger) Printf(format string, args ...interface{}) {
 	slog.Write(fmt.Sprintf(format, args...))
 }
 
-func init() {
+func initKafka() {
 	sarama.Logger = new(saramaLogger)
 }
 

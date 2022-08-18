@@ -1,9 +1,14 @@
+SOURCES=*.go
+
 include Makefile.inc
 
-build:
-	go build -o melp .
+build: bin/melp
 
-run:
+bin/melp: $(SOURCES) Makefile
+	@mkdir -p bin
+	go build -o bin/melp .
+
+run: bin/melp
 	ENDPOINT=$(ENDPOINT) \
 	OUTPUT_KEY=$(OUTPUT_KEY) \
 	OUTPUT_SECRET=$(OUTPUT_SECRET) \
@@ -12,13 +17,21 @@ run:
 	INPUT_KEY=$(INPUT_KEY) \
 	INPUT_SECRET=$(INPUT_SECRET) \
 	CONSUMERGROUP=$(CONSUMERGROUP) \
-	go run .
+	bin/melp --port 9090
+
+docker:
+	docker build -t melp:docker .
+
+nerdctl:
+	nerdctl build -t melp:nerdctl .
 
 check:
 	@echo "Checking...\n"
 	gocyclo -over 15 . || echo -n ""
 	@echo ""
 	golint -min_confidence 0.21 -set_exit_status ./...
+	@echo ""
+	go mod verify
 	@echo "\nAll ok!"
 
 check2:

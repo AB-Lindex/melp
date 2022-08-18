@@ -31,16 +31,16 @@ xAuthorization: Basic a2FsbGU6YWRh
 Content-Type: sand
 content-encoding: ascii
 
-johan7
+0
 
 
 ###
-POST {{base}}/fail?status=500
+POST {{base}}/fail?status=500&accept=ll
 
-
+kalle
 ###
 POST {{base}}/send/xyzzy
 Authorization: bearer abcd1234
 Content-Type: application/json
 
-{"data":"text"}
+{"data":"text","id":555}

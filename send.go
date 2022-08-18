@@ -17,7 +17,6 @@ var (
 )
 
 func send(args *sendArgs, r *http.Request) (interface{}, int, error) {
-
 	p := config.outputs[args.ID]
 
 	if p == nil {

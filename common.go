@@ -62,6 +62,7 @@ type Message struct {
 	Headers   map[string]string
 }
 
+// AddMetadata adds metadata (key+value) to the message
 func (msg *Message) AddMetadata(key, value string) {
 	if msg.Metadata == nil {
 		msg.Metadata = make(map[string]string)
@@ -69,6 +70,8 @@ func (msg *Message) AddMetadata(key, value string) {
 	msg.Metadata[key] = value
 }
 
+// AddHeader adds header(s) (key+value) to the message,
+// all keys are converted using http.CanonicalHeaderKey
 func (msg *Message) AddHeader(key, value string) {
 	if key == "" || value == "" {
 		return
@@ -76,10 +79,16 @@ func (msg *Message) AddHeader(key, value string) {
 	if msg.Headers == nil {
 		msg.Headers = make(map[string]string)
 	}
-	msg.Headers[key] = value
+	msg.Headers[http.CanonicalHeaderKey(key)] = value
 }
 
+// GetHeader returns the header value of a specific key
+// (the key is converted using http.CanonicalHeaderKey before match)
+func (msg *Message) GetHeader(key string) string {
+	return msg.Headers[http.CanonicalHeaderKey(key)]
+}
+
+// ContentType returns the content-type of the message
 func (msg *Message) ContentType() string {
-	return ""
-	// TODO
+	return msg.Headers["Content-Type"]
 }
