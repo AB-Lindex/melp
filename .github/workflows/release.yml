@@ -29,4 +29,3 @@ jobs:
       uses: docker/build-push-action@v3
       with:
         push: true
-        tags: lindex/melp:latest lindex/melp:${GITHUB_REF#refs/*/}
