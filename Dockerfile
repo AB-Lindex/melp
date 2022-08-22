@@ -16,8 +16,11 @@ COPY go.mod go.sum ./
 # download Go modules and dependencies
 RUN go mod download
 
-# copy directory files i.e all files ending with .go (+ extras)
-COPY *.go *.txt ./
+# copy directory files i.e all files ending with .go
+COPY *.go ./
+
+# copy the version.txt (should be different each run, thus cache is useless afterwards)
+COPY version.txt ./
 
 # compile application (static linked)
 RUN CGO_ENABLED=0 go build -ldflags="-extldflags=-static" -o /melp
