@@ -17,7 +17,7 @@ run: bin/melp
 	INPUT_KEY=$(INPUT_KEY) \
 	INPUT_SECRET=$(INPUT_SECRET) \
 	CONSUMERGROUP=$(CONSUMERGROUP) \
-	bin/melp --port 9090
+	bin/melp --port 9090 -l 8
 
 docker:
 	docker build -t melp:docker .

@@ -24,10 +24,7 @@ gobi
 
 ###
 POST {{base}}/send/xyzzy
-Authorization: 1 2 3
 Authorization: bearer abcd1234
-xAuthorization: Bearer KU2cRyuhUiCtYhNdxqsqjzKRzKsZIB5U8f9bTelL3lWWXKAtVmomBzAqAGZf
-xAuthorization: Basic a2FsbGU6YWRh
 Content-Type: sand
 content-encoding: ascii
 

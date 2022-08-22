@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/Shopify/sarama"
 	"github.com/ninlil/butler/log"
@@ -23,6 +25,7 @@ type kafkaReceiver struct {
 	ready  chan bool
 	ctx    context.Context
 	cancel func()
+	wg     *sync.WaitGroup
 }
 
 // type receiverCallback struct {
@@ -121,12 +124,14 @@ func (r *kafkaReceiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 
 				msg := r.CreateMessage(message)
 				err := r.Callback.Send(msg)
+				log.Trace().Msgf("r.Callback.Send(msg) -> %v", err)
 				if err != nil {
 					log.Error().
 						Str("topic", message.Topic).
 						Int32("partition", message.Partition).
 						Int64("offset", message.Offset).
 						Msgf("processing failed: %v", err)
+					r.Reconnect(message.Topic, message.Partition, message.Offset)
 				} else {
 					session.MarkMessage(message, "")
 				}
@@ -179,8 +184,27 @@ func (r *kafkaReceiver) Connect() (Consumer, error) {
 	return r, nil
 }
 
+func (r *kafkaReceiver) Reconnect(topic string, partition int32, offset int64) {
+	log.Warn().Msgf("Kafka(%s): Attempting reconnect..", r.ID)
+	go func() {
+		r.client.Close()
+		log.Trace().Msgf("RETRY - Closed... sleeping %s...", settings.ReconnectTimer)
+
+		time.Sleep(settings.ReconnectTimer)
+
+		log.Trace().Msg("RETRY - Re-connecting...")
+		_, err := r.Connect()
+		if err != nil {
+			log.Panic().Msgf("Kafka(%s): reconnection failed: %v", r.ID, err)
+		}
+		r.wg.Add(1) // restart the listener (and waitgroup)
+		r.Listen(r.wg)
+	}()
+}
+
 func (r *kafkaReceiver) Listen(wg *sync.WaitGroup) {
 	ctx, cancel := context.WithCancel(context.Background())
+	r.wg = wg
 	r.ctx = ctx
 	r.cancel = cancel
 	r.ready = make(chan bool)
@@ -192,10 +216,15 @@ func (r *kafkaReceiver) Listen(wg *sync.WaitGroup) {
 			// server-side rebalance happens, the consumer session will need to be
 			// recreated to get the new claims
 			if err := r.client.Consume(ctx, r.Topics, r); err != nil {
+				if errors.Is(err, sarama.ErrClosedConsumerGroup) {
+					log.Warn().Msg("Kafka-Listen-error: Consumer-Group was closed")
+					return
+				}
 				log.Panic().Msgf("Error from consumer: %v", err)
 			}
 			// check if context was cancelled, signaling that the consumer should stop
 			if ctx.Err() != nil {
+				log.Info().Msgf("Kafka-Listen(%s) - closing down", r.ID)
 				return
 			}
 			r.ready = make(chan bool)

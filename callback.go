@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -89,6 +90,10 @@ func (callback *melpCallback) Send(message *Message) error {
 
 	if resp != nil {
 		log.Debug().Msgf("Send-> send-response = %d", resp.StatusCode)
+	}
+
+	if err == nil && (resp.StatusCode < http.StatusOK || resp.StatusCode > 299) {
+		return fmt.Errorf(resp.Status)
 	}
 
 	return err

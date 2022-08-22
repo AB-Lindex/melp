@@ -4,16 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	arg "github.com/alexflint/go-arg"
 	"github.com/ninlil/butler/log"
 )
 
 type melpArgs struct {
-	Config   string `arg:"-f,--file,env:CONFIG" default:"melp.yaml" help:"name of config-file"`
-	Port     int    `arg:"--port,env:HTTP_PORT" default:"10000" help:"http-port number"`
-	LogLevel int    `arg:"-l,--loglevel" help:"log-level" default:"5"`
-	Relaxed  bool   `arg:"--relax" help:"relaxed parsing of config-file"`
+	Config         string        `arg:"-f,--file,env:CONFIG" default:"melp.yaml" help:"name of config-file"`
+	Port           int           `arg:"--port,env:HTTP_PORT" default:"10000" help:"http-port number"`
+	ReconnectTimer time.Duration `arg:"--reconnect-delay" help:"delay when reconnecting after failure" default:"15s" placeholder:"DELAY"`
+	LogLevel       int           `arg:"-l,--loglevel" help:"log-level" default:"5" placeholder:"LEVEL"`
+	Relaxed        bool          `arg:"--relax" help:"relaxed parsing of config-file"`
 }
 
 var settings melpArgs
@@ -43,4 +45,11 @@ func init() {
 	}
 
 	log.WithLevel(log.Level(settings.LogLevel))
+
+	if settings.ReconnectTimer < time.Second {
+		settings.ReconnectTimer = time.Second
+	}
+	if settings.ReconnectTimer > time.Minute {
+		settings.ReconnectTimer = time.Minute
+	}
 }
