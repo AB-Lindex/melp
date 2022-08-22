@@ -51,7 +51,7 @@ func (cfg *melpConfig) Load(name string) bool {
 
 	var ok = true
 
-	log.Trace().Msg("validating...")
+	log.Trace().Msgf("validating '%s'...", name)
 	for i, output := range cfg.Output.Kafka {
 		errs := output.Validate()
 		if printErrors(errs, "Error validating output #%d:", i) {
