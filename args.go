@@ -18,6 +18,10 @@ type melpArgs struct {
 	Relaxed        bool          `arg:"--relax" help:"relaxed parsing of config-file"`
 }
 
+func (melpArgs) Version() string {
+	return versionFunc()
+}
+
 var settings melpArgs
 
 func init() {
@@ -31,7 +35,11 @@ func init() {
 	if err != nil {
 		if errors.Is(err, arg.ErrHelp) {
 			parser.WriteHelp(os.Stdout)
-			os.Exit(1)
+			os.Exit(0)
+		}
+		if errors.Is(err, arg.ErrVersion) {
+			fmt.Print(versionFunc())
+			os.Exit(0)
 		}
 		fmt.Println("error parsing argument:", err)
 		os.Exit(1)

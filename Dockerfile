@@ -16,22 +16,25 @@ COPY go.mod go.sum ./
 # download Go modules and dependencies
 RUN go mod download
 
-# copy directory files i.e all files ending with .go
-COPY *.go ./
+# copy directory files i.e all files ending with .go (+ tools)
+COPY *.go *.sh ./
 
-# compile application
-RUN go build -o /melp
+RUN sh get_version.sh && cat version.txt
 
+# compile application (static linked)
+RUN CGO_ENABLED=0 go build -ldflags="-extldflags=-static" -o /melp
 
 ##
 ## STEP 2 - DEPLOY
 ##
 FROM scratch
 
+ENV PATH=/
+
 WORKDIR /
 
-COPY --from=build /melp /melp
+COPY --from=build /melp /
 
-EXPOSE 8080
+EXPOSE 10000
 
-ENTRYPOINT ["/melp"]
+CMD ["/melp"]

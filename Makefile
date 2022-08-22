@@ -20,9 +20,11 @@ run: bin/melp
 	bin/melp --port 9090 -l 8
 
 docker:
+	-docker rmi melp:docker
 	docker build -t melp:docker .
 
 nerdctl:
+	-docker rmi melp:nerdctl
 	nerdctl build -t melp:nerdctl .
 
 check:
@@ -37,3 +39,6 @@ check:
 check2:
 	@echo ""
 	golangci-lint run -E misspell -E depguard -E dupl -E goconst -E gocyclo -E ifshort -E predeclared -E tagliatelle -E errorlint -E godox -D structcheck
+
+release:
+	gh release create `cat version.txt`
