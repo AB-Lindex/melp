@@ -33,6 +33,8 @@ WORKDIR /
 
 COPY --from=build /melp /
 
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+
 EXPOSE 10000
 
 CMD ["/melp"]
