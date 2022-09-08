@@ -36,4 +36,4 @@ flowchart LR;
 ```
 
 ## How-to-run
-* [Docker Run](vscode-remote:examples/DOCKER.md)
+* [Docker Run](examples/DOCKER.md)
