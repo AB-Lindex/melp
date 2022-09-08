@@ -26,6 +26,7 @@ docker run --rm -it `
 
 ## Background service
 ```sh
+# linux / macos
 docker run --rm -d --restart unless-stopped \
   -v "$(pwd)/config:/config" \
   -e CONFIG=/config/melp.yaml \
@@ -34,6 +35,7 @@ docker run --rm -d --restart unless-stopped \
 ```
 
 ```powershell
+# powershell
 docker run --rm -d --restart unless-stopped `
   -v "$(pwd)/config:/config" `
   -e CONFIG=/config/melp.yaml `
