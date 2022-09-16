@@ -31,6 +31,7 @@ type melpInput struct {
 var config = new(melpConfig)
 
 func (cfg *melpConfig) Load(name string) bool {
+	var inUse int
 
 	outputMap := make(map[string]int)
 
@@ -53,18 +54,25 @@ func (cfg *melpConfig) Load(name string) bool {
 
 	log.Trace().Msgf("validating '%s'...", name)
 	for i, output := range cfg.Output.Kafka {
-		errs := output.Validate()
+		errs, active := output.Validate()
 		if printErrors(errs, "Error validating output #%d:", i) {
 			ok = false
 		} else {
-			outputMap[output.ID]++
+			if active {
+				inUse++
+				outputMap[output.ID]++
+			}
 		}
 	}
 
 	for i, input := range cfg.Input.Kafka {
-		errs := input.Validate()
-		if printErrors(errs, "Error validating input #%d:", i) {
-			ok = false
+		errs, active := input.Validate()
+		if active {
+			if printErrors(errs, "Error validating input #%d:", i) {
+				ok = false
+			} else {
+				inUse++
+			}
 		}
 	}
 
@@ -73,6 +81,11 @@ func (cfg *melpConfig) Load(name string) bool {
 			log.Error().Msgf("error: duplicate output id '%s'", id)
 			ok = false
 		}
+	}
+
+	if inUse == 0 {
+		log.Info().Msg("Nothing to do. Exiting")
+		return false
 	}
 
 	return ok

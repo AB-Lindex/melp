@@ -38,7 +38,7 @@ func (name invalidError) Error() string {
 // Producer is the definition of something that send messages
 type Producer interface {
 	Name() string
-	Validate() []error
+	Validate() ([]error, bool)
 	Connect() (Producer, error)
 	Send(Message) (interface{}, error)
 	Close() error
@@ -48,7 +48,7 @@ type Producer interface {
 // Consumer is the definition of something reveiving messages
 type Consumer interface {
 	Name() string
-	Validate() []error
+	Validate() ([]error, bool)
 	Connect() (Consumer, error)
 	Listen(*sync.WaitGroup)
 	Close() error

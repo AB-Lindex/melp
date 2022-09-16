@@ -24,7 +24,7 @@ func (p *kafkaProducer) Name() string {
 	return p.ID
 }
 
-func (p *kafkaProducer) Validate() []error {
+func (p *kafkaProducer) Validate() ([]error, bool) {
 	var errs []error
 
 	if p.Endpoint.err != nil {
@@ -42,7 +42,7 @@ func (p *kafkaProducer) Validate() []error {
 		errs = append(errs, requiredError(TOPIC))
 	}
 
-	return errs
+	return errs, true
 }
 
 // Connect to a Kafka server

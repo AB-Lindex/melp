@@ -47,7 +47,7 @@ func (r *kafkaReceiver) Name() string {
 	return r.ID
 }
 
-func (r *kafkaReceiver) Validate() []error {
+func (r *kafkaReceiver) Validate() ([]error, bool) {
 	var errs []error
 
 	if r.Callback.Auth != nil {
@@ -77,7 +77,7 @@ func (r *kafkaReceiver) Validate() []error {
 		errs = append(errs, requiredError(URL))
 	}
 
-	return errs
+	return errs, true
 }
 
 func (r *kafkaReceiver) Close() error {

@@ -15,25 +15,27 @@ var routes = []router.Route{
 func main() {
 	initKafka()
 
-	os.Exit(func() int {
-		defer butler.Cleanup(config.Close)
+	os.Exit(run())
+}
 
-		err := router.Serve(routes, router.WithPort(settings.Port))
-		if err != nil {
-			log.Fatal().Msg(err.Error())
-		}
+func run() int {
+	defer butler.Cleanup(config.Close)
 
-		if !config.Load(settings.Config) {
-			return 1
-		}
+	err := router.Serve(routes, router.WithPort(settings.Port))
+	if err != nil {
+		log.Fatal().Msg(err.Error())
+	}
 
-		if !config.Connect() {
-			log.Warn().Msg("some integrations failed")
-		}
+	if !config.Load(settings.Config) {
+		return 1 // dont want os.Exit here, because then the deferred cleanup wouldn't trigger
+	}
 
-		config.Listen()
+	if !config.Connect() {
+		log.Warn().Msg("some integrations failed")
+	}
 
-		butler.Run()
-		return 0
-	}())
+	config.Listen()
+
+	butler.Run()
+	return 0
 }

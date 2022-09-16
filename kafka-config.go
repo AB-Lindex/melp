@@ -40,10 +40,10 @@ type melpCallback struct {
 	Auth *Auth  `json:"auth" yaml:"auth"`
 }
 
-func (config *melpKafkaOutputConfig) Validate() []error {
+func (config *melpKafkaOutputConfig) Validate() ([]error, bool) {
 
 	if config.Disabled {
-		return nil
+		return nil, false
 	}
 
 	config.producer = &kafkaProducer{
@@ -74,9 +74,9 @@ func (config *melpKafkaOutputConfig) NewProducer() (Producer, error) {
 	return config.producer, nil
 }
 
-func (config *melpKafkaInputConfig) Validate() []error {
+func (config *melpKafkaInputConfig) Validate() ([]error, bool) {
 	if config.Disabled {
-		return nil
+		return nil, false
 	}
 
 	for i := range config.Topics {
