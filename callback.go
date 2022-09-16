@@ -61,7 +61,7 @@ func (callback *melpCallback) Send(message *Message) error {
 
 	if callback.Auth != nil {
 		if callback.Auth.Bearer != "" {
-			req.Header.Add("Autorization", fmt.Sprintf("Bearer %s", callback.Auth.Bearer))
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", callback.Auth.Bearer))
 		}
 		if len(callback.Auth.Basic) > 0 {
 			var text string
@@ -69,7 +69,7 @@ func (callback *melpCallback) Send(message *Message) error {
 				text = fmt.Sprintf("%s:%s", k, v)
 			}
 			basic := base64.StdEncoding.EncodeToString([]byte(text))
-			req.Header.Add("Autorization", fmt.Sprintf("Basic %s", basic))
+			req.Header.Add("Authorization", fmt.Sprintf("Basic %s", basic))
 		}
 	}
 
