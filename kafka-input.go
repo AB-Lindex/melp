@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -75,6 +76,14 @@ func (r *kafkaReceiver) Validate() ([]error, bool) {
 
 	if r.Callback.URL == "" {
 		errs = append(errs, requiredError(URL))
+	}
+
+	vars := map[string]string{
+		"topic": "topic",
+	}
+	target := expandMap(r.Callback.URL, vars)
+	if _, err := url.Parse(target); err != nil {
+		errs = append(errs, fmt.Errorf("invalid URL: %v", err))
 	}
 
 	return errs, true

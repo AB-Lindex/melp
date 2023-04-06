@@ -47,6 +47,3 @@ docker run --rm -d --restart unless-stopped `
 ```sh
 docker run --rm lindex/melp melp -h
 ```
-
-## Powershell considerations
-You need to change the command to a one-liner, or replace ending the '\' to an \` character

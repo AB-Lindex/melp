@@ -3,3 +3,4 @@ Makefile.inc
 *.secret
 *.cfg
 version.txt
+tests/

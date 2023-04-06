@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -37,23 +38,33 @@ func (hlog *httpLogger) Warn(format string, v ...interface{}) {
 	log.Warn().Msgf(hlog.Format(format, v...))
 }
 
+func expandMap(txt string, vars map[string]string) string {
+	return os.Expand(txt, func(key string) string {
+		return vars[key]
+	})
+}
+
 func (callback *melpCallback) Send(message *Message) error {
 
 	netClient.Logger = new(httpLogger)
 
-	log.Trace().Msgf("Send-> preparing to send message...")
+	log.Trace().Msgf("Send-> preparing to send message to '%s'...", callback.URL)
 
-	url := os.Expand(callback.URL, func(key string) string {
-		return message.Metadata[key]
-	})
+	// target := os.Expand(callback.URL, func(key string) string {
+	// 	return message.Metadata[key]
+	// })
+	target := expandMap(callback.URL, message.Metadata)
+	if _, err := url.Parse(target); err != nil {
+		return fmt.Errorf("invalid url: %s", target)
+	}
 
-	log.Trace().Msgf("Send-> url = '%s'", url)
+	log.Trace().Msgf("Send-> url = '%s'", target)
 
 	//buffer := bytes.NewBuffer(message.Body)
 
 	//resp, err := netClient.Post(url, message.ContentType(), buffer)
 
-	req, err := retryablehttp.NewRequest("POST", url, message.Body)
+	req, err := retryablehttp.NewRequest("POST", target, message.Body)
 	if err != nil {
 		log.Error().Msgf("create request failed: %v", err)
 		return err
