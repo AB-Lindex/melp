@@ -178,8 +178,11 @@ func (r *kafkaReceiver) Connect() (Consumer, error) {
 	cfg := sarama.NewConfig()
 	cfg.ClientID = fmt.Sprintf("melp-reader-%s", r.ID)
 
-	//cfg.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategySticky
-	cfg.Consumer.Group.Rebalance.Strategy = sarama.BalanceStrategyRoundRobin
+	// Deprecation warning: Consumer.Group.Rebalance.Strategy exists for historical compatibility and should not be used.
+	// Please use Consumer.Group.Rebalance.GroupStrategies
+	//
+	// using sticky to minimize rebalancing
+	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.BalanceStrategySticky}
 
 	r.Endpoint.SetConfig(cfg)
 
