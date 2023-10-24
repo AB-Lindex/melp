@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/ninlil/butler/log"
 )
 
@@ -22,6 +21,8 @@ var (
 	URL      = "callback.url"
 	//CALLBACK = "callback"
 	//AUTH     = "auth"
+
+	PartitionKey = "partitionkey"
 
 	errEndpointMissingHost   = stringError("'endpoint' is missing host and/or port")
 	errEndpointInvalidScheme = stringError("'endpoint' is invalid")
@@ -64,11 +65,20 @@ func initKafka() {
 	sarama.Logger = new(saramaLogger)
 }
 
-func newKafkaEndpoint(endpoint, key, secret string) *kafkaEndpoint {
+func findKafkaEndpoint(endpoint string) *melpKafkaEndpointConfig {
+	for _, ep := range config.Endpoint.Kafka {
+		if ep.Name == endpoint {
+			return ep
+		}
+	}
+	return nil
+}
+
+func newKafkaEndpoint(ep *melpKafkaEndpointConfig) *kafkaEndpoint { //, key, secret string
 	var e = &kafkaEndpoint{
-		endpoint: os.ExpandEnv(endpoint),
-		key:      os.ExpandEnv(key),
-		secret:   os.ExpandEnv(secret),
+		endpoint: ep.Endpoint,
+		key:      ep.Key,
+		secret:   ep.Secret,
 	}
 
 	e.err = e.parseEndpoint()

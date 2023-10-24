@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
+	"math/rand"
 	"net/url"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/ninlil/butler/log"
 )
 
@@ -122,17 +124,27 @@ func (r *kafkaReceiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 	// NOTE:
 	// Do not move the code below to a goroutine.
 	// The `ConsumeClaim` itself is called within a goroutine, see:
-	// https://github.com/Shopify/sarama/blob/main/consumer_group.go#L27-L29
+	// https://github.com/IBM/sarama/blob/main/consumer_group.go#L27-L29
 	for {
 		select {
 		case message := <-claim.Messages():
 			if message == nil {
 				log.Warn().Msgf("%s: received -nil- message", r.ID)
 			} else {
-				log.Trace().Str("group", r.Group).Str("topic", message.Topic).Msgf("%s: Message claimed: value = %s, timestamp = %v", r.ID, string(message.Value), message.Timestamp)
+				log.Trace().Str("group", r.Group).
+					Str("topic", message.Topic).
+					Int("partition", int(message.Partition)).
+					Msgf("%s: Offset = %d, timestamp = %v", r.ID, message.Offset, message.Timestamp)
 
 				msg := r.CreateMessage(message)
+				start := time.Now()
 				err := r.Callback.Send(msg)
+				dur := time.Since(start)
+				if err == nil {
+					metrics.Receive(message.Topic, message.Partition, len(message.Value), dur, "ok")
+				} else {
+					metrics.Receive(message.Topic, message.Partition, len(message.Value), dur, "fail")
+				}
 				log.Trace().Msgf("r.Callback.Send(msg) -> %v", err)
 				if err != nil {
 					log.Error().
@@ -148,7 +160,7 @@ func (r *kafkaReceiver) ConsumeClaim(session sarama.ConsumerGroupSession, claim 
 
 		// Should return when `session.Context()` is done.
 		// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
-		// https://github.com/Shopify/sarama/issues/1192
+		// https://github.com/IBM/sarama/issues/1192
 		case <-session.Context().Done():
 			return nil
 		}
@@ -163,6 +175,9 @@ func (r *kafkaReceiver) CreateMessage(message *sarama.ConsumerMessage) *Message 
 	msg.AddMetadata("topic", message.Topic)
 	msg.AddMetadata("partition", strconv.FormatInt(int64(message.Partition), 10))
 	msg.AddMetadata("offset", strconv.FormatInt(message.Offset, 10))
+	if len(message.Key) > 0 {
+		msg.AddMetadata(PartitionKey, string(message.Key))
+	}
 
 	for _, h := range message.Headers {
 		msg.AddHeader(string(h.Key), string(h.Value))
@@ -196,13 +211,24 @@ func (r *kafkaReceiver) Connect() (Consumer, error) {
 	return r, nil
 }
 
+func reconnectDelay() time.Duration {
+	timer := float64(settings.ReconnectDelay.Milliseconds())
+	jitter := float64(settings.ReconnectJitter.Milliseconds())
+
+	jitter = jitter * (rand.Float64()*2 - 1)
+	delay := math.Round((timer+jitter)/100) * 100
+
+	return time.Duration(delay) * time.Millisecond
+}
+
 func (r *kafkaReceiver) Reconnect(topic string, partition int32, offset int64) {
 	log.Warn().Msgf("Kafka(%s): Attempting reconnect..", r.ID)
 	go func() {
 		r.client.Close()
-		log.Trace().Msgf("RETRY - Closed... sleeping %s...", settings.ReconnectTimer)
+		delay := reconnectDelay()
+		log.Trace().Msgf("RETRY - Closed... sleeping %v...", delay)
 
-		time.Sleep(settings.ReconnectTimer)
+		time.Sleep(delay)
 
 		log.Trace().Msg("RETRY - Re-connecting...")
 		_, err := r.Connect()

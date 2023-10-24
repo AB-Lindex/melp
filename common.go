@@ -15,6 +15,10 @@ var passthruHeaders = []string{
 	"Content-Range",
 	"ETag",
 	"Expires",
+	"X-Request-Id",
+	"X-Correlation-Id",
+	"Traceparent",
+	"Tracestate",
 }
 
 type stringError string
@@ -40,7 +44,7 @@ type Producer interface {
 	Name() string
 	Validate() ([]error, bool)
 	Connect() (Producer, error)
-	Send(Message) (interface{}, error)
+	Send(Message, *http.Request) (interface{}, error)
 	Close() error
 	Authorize(*http.Request) (bool, error)
 }

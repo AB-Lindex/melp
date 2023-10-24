@@ -1,0 +1,17 @@
+apiVersion: melp/v1alpha1
+
+endpoints:
+  kafka:
+    - name: kafka
+      endpoint: ${KAFKA_BOOTSTRAP_SERVER}
+      key: ${KAFKA_API_KEY}
+      secret: ${KAFKA_API_SECRET}
+
+producers:
+  kafka:
+    - endpoint: kafka
+      topic: ${KAFKA_TOPIC}
+      id: xyzzy
+      auth:
+        anon: true
+

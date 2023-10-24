@@ -42,3 +42,9 @@ check2:
 
 release:
 	gh release create `cat version.txt`
+
+test/a:
+	envexec tests/a_produce.env -- bin/melp --reconnect-delay 12s -f tests/a_produce.yaml --allow-stop
+
+test/hdr:
+	envexec tests/hdr_produce.env -- bin/melp -f tests/hdr_produce.yaml

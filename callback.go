@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	"github.com/ninlil/envsubst"
 	"github.com/rs/zerolog/log"
 )
 
@@ -39,13 +39,20 @@ func (hlog *httpLogger) Warn(format string, v ...interface{}) {
 }
 
 func expandMap(txt string, vars map[string]string) string {
-	return os.Expand(txt, func(key string) string {
-		return vars[key]
+	envsubst.SetPrefix('%')
+	str, err := envsubst.ConvertString(txt, func(key string) (string, bool) {
+		v, ok := vars[key]
+		return v, ok
 	})
+	if err != nil {
+		log.Error().Msgf("expandMap-error: %v", err)
+	}
+	return str
 }
 
-func (callback *melpCallback) Send(message *Message) error {
+var melpUserAgent = fmt.Sprintf("melp-%s", versionFunc())
 
+func (callback *melpCallback) Send(message *Message) error {
 	netClient.Logger = new(httpLogger)
 
 	log.Trace().Msgf("Send-> preparing to send message to '%s'...", callback.URL)
@@ -82,6 +89,12 @@ func (callback *melpCallback) Send(message *Message) error {
 			basic := base64.StdEncoding.EncodeToString([]byte(text))
 			req.Header.Add("Authorization", fmt.Sprintf("Basic %s", basic))
 		}
+	}
+
+	req.Header.Add("User-Agent", melpUserAgent)
+
+	for k, v := range callback.Headers {
+		req.Header.Add(k, v)
 	}
 
 	for k, v := range message.Metadata {

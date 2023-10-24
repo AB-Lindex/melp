@@ -3,9 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
-	"github.com/Shopify/sarama"
+	"github.com/IBM/sarama"
 	"github.com/ninlil/butler/log"
 )
 
@@ -92,20 +93,26 @@ type kafkaSendResponse struct {
 	Offset    int64 `json:"offset"`
 }
 
-func (p *kafkaProducer) Send(msg Message) (interface{}, error) {
-	var hdrs []sarama.RecordHeader
+func (p *kafkaProducer) Send(msg Message, r *http.Request) (interface{}, error) {
+	var hdrs = make([]sarama.RecordHeader, 0, len(msg.Headers))
+	var key sarama.Encoder = nil
 
 	for k, v := range msg.Headers {
-		hdrs = append(hdrs, sarama.RecordHeader{
-			Key:   []byte(k),
-			Value: []byte(v),
-		})
+		if strings.EqualFold(k, PartitionKey) {
+			key = sarama.StringEncoder(v)
+		} else {
+			hdrs = append(hdrs, sarama.RecordHeader{
+				Key:   []byte(k),
+				Value: []byte(v),
+			})
+		}
 	}
 
 	var pkg = sarama.ProducerMessage{
 		Topic:     p.Topic,
 		Headers:   hdrs,
 		Timestamp: time.Now().UTC(),
+		Key:       key,
 		Value:     sarama.ByteEncoder(msg.Body),
 	}
 
@@ -115,6 +122,10 @@ func (p *kafkaProducer) Send(msg Message) (interface{}, error) {
 		return nil, err
 	}
 	log.Trace().Msgf("%s: msg sent: %d/%d", p.ID, partition, offset)
+
+	metrics.Send(p.Topic, partition, len(msg.Body))
+
+	log.AddRequestFields(r, "partition", partition, "offset", offset)
 
 	return &kafkaSendResponse{
 		Partition: partition,

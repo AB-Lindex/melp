@@ -1,15 +1,20 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/ninlil/butler/log"
 )
 
-type melpKafkaOutputConfig struct {
+type melpKafkaEndpointConfig struct {
+	Name     string `json:"name" yaml:"name"`
 	Endpoint string `json:"endpoint" yaml:"endpoint"`
 	Key      string `json:"key" yaml:"key"`
 	Secret   string `json:"secret" yaml:"secret"`
+}
+
+type melpKafkaOutputConfig struct {
+	Endpoint string `json:"endpoint" yaml:"endpoint"`
 	ID       string `json:"id" yaml:"id"`
 	Disabled bool   `json:"disabled" yaml:"disabled"`
 
@@ -22,8 +27,6 @@ type melpKafkaOutputConfig struct {
 
 type melpKafkaInputConfig struct {
 	Endpoint string `json:"endpoint" yaml:"endpoint"`
-	Key      string `json:"key" yaml:"key"`
-	Secret   string `json:"secret" yaml:"secret"`
 	ID       string `json:"id" yaml:"id"`
 	Disabled bool   `json:"disabled" yaml:"disabled"`
 
@@ -36,8 +39,9 @@ type melpKafkaInputConfig struct {
 }
 
 type melpCallback struct {
-	URL  string `json:"url" yaml:"url"`
-	Auth *Auth  `json:"auth" yaml:"auth"`
+	URL     string            `json:"url" yaml:"url"`
+	Auth    *Auth             `json:"auth" yaml:"auth"`
+	Headers map[string]string `json:"headers" yaml:"headers"`
 }
 
 func (config *melpKafkaOutputConfig) Validate() ([]error, bool) {
@@ -46,11 +50,16 @@ func (config *melpKafkaOutputConfig) Validate() ([]error, bool) {
 		return nil, false
 	}
 
+	ep := findKafkaEndpoint(config.Endpoint)
+	if ep == nil {
+		return []error{stringError(fmt.Sprintf("endpoint '%s' not found", config.Endpoint))}, false
+	}
+
 	config.producer = &kafkaProducer{
-		ID:       os.ExpandEnv(config.ID),
-		Endpoint: newKafkaEndpoint(config.Endpoint, config.Key, config.Secret),
-		Topic:    os.ExpandEnv(config.Topic),
-		Auth:     config.Auth.ExpandEnv(),
+		ID:       config.ID,
+		Endpoint: newKafkaEndpoint(ep),
+		Topic:    config.Topic,
+		Auth:     &config.Auth,
 	}
 
 	return config.producer.Validate()
@@ -79,15 +88,16 @@ func (config *melpKafkaInputConfig) Validate() ([]error, bool) {
 		return nil, false
 	}
 
-	for i := range config.Topics {
-		config.Topics[i] = os.ExpandEnv(config.Topics[i])
+	ep := findKafkaEndpoint(config.Endpoint)
+	if ep == nil {
+		return []error{stringError(fmt.Sprintf("endpoint '%s' not found", config.Endpoint))}, false
 	}
 
 	config.consumer = &kafkaReceiver{
-		ID:       os.ExpandEnv(config.ID),
-		Endpoint: newKafkaEndpoint(config.Endpoint, config.Key, config.Secret),
+		ID:       config.ID,
+		Endpoint: newKafkaEndpoint(ep),
 		Topics:   config.Topics,
-		Group:    os.ExpandEnv(config.Group),
+		Group:    config.Group,
 		Callback: config.Callback,
 	}
 

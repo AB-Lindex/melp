@@ -22,3 +22,10 @@ func printErrors(errs []error, format string, v ...interface{}) bool {
 
 	return true
 }
+
+func flag2text(flag bool, trueText, falseText string) string {
+	if flag {
+		return trueText
+	}
+	return falseText
+}

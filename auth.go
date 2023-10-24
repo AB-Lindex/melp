@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -24,28 +23,6 @@ var (
 	invalidAuthUnknown = stringError("unknown user")
 	errFail            = stringError("forced-fail")
 )
-
-// ExpandEnv uses `os.ExpandEnv` on all values (and usernames in 'Basic')
-func (auth *Auth) ExpandEnv() *Auth {
-	if auth == nil {
-		return nil
-	}
-	auth.Bearer = os.ExpandEnv(auth.Bearer)
-
-	if len(auth.Basic) > 0 {
-		var basics = make(map[string]string)
-		for u, p := range auth.Basic {
-			u = os.ExpandEnv(u)
-			p = os.ExpandEnv(p)
-			if u != "" && p != "" { // dont add empty usernames or passwords if they became blank ENV-values
-				basics[u] = p
-			}
-		}
-		auth.Basic = basics
-	}
-
-	return auth
-}
 
 // Validate that a request is authorized to pass
 func (auth Auth) Validate(r *http.Request) (bool, error) {
