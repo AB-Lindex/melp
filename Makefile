@@ -4,7 +4,7 @@ include Makefile.inc
 
 build: bin/melp
 
-bin/melp: $(SOURCES) Makefile
+bin/melp: $(SOURCES) Makefile go.mod go.sum
 	@mkdir -p bin
 	go build -o bin/melp .
 
