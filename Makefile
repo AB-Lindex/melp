@@ -41,7 +41,10 @@ check2:
 	golangci-lint run -E misspell -E depguard -E dupl -E goconst -E gocyclo -E ifshort -E predeclared -E tagliatelle -E errorlint -E godox -D structcheck
 
 release:
-	gh release create `cat version.txt`
+	@echo -n "Latest release"
+	@gh release list -L 1 | cat
+	@echo ""
+	gh release create
 
 test/a:
 	envexec tests/a_produce.env -- bin/melp --reconnect-delay 12s -f tests/a_produce.yaml --allow-stop
