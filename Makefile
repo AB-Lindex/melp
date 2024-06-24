@@ -40,6 +40,9 @@ check2:
 	@echo ""
 	golangci-lint run -E misspell -E depguard -E dupl -E goconst -E gocyclo -E ifshort -E predeclared -E tagliatelle -E errorlint -E godox -D structcheck
 
+scan:
+	trivy fs .
+
 release:
 	@echo -n "Latest release"
 	@gh release list -L 1 | cat
